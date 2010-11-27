@@ -21,7 +21,8 @@
   };
   var $t = $.timeago;
   var $methods = {};
-  var $interval = {};
+  var $interval;
+  var $attachedTimestamps = $();
 
   $.extend($.timeago, {
     settings: {
@@ -113,20 +114,22 @@
 
     var self = this;
     var newTimestamps = self.filter(unattachedTimestamps);
+    $attachedTimestamps = $attachedTimestamps.add(newTimestamps);
     self.each(refresh);
 
     var $s = $t.settings;
-    if ($s.refreshMillis > 0) {
-      $interval = setInterval(function() { newTimestamps.each(refresh); }, $s.refreshMillis);
+    if ($s.refreshMillis > 0 && $interval === undefined) {
+      $interval = setInterval(function() {
+        $attachedTimestamps.each(refresh);
+      }, $s.refreshMillis);
     }
     return self;
   };
-  
+
   $methods["stop"] = function() {
-    if (typeof $interval === "undefined") {
-      clearInterval($interval);
-      $interval = undefined;
-    }
+    if (this.length === 0) return;
+    $attachedTimestamps = $attachedTimestamps.not(this.selector);
+    return this;
   }
 
   function refresh() {
@@ -148,7 +151,7 @@
   }
 
   function unattachedTimestamps($elements) {
-   return $(this).data("timeago") === undefined;
+    return $(this).data("timeago") === undefined;
   }
 
   function inWords(date) {
