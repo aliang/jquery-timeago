@@ -20,6 +20,8 @@
     else return inWords($.timeago.datetime(timestamp));
   };
   var $t = $.timeago;
+  var $methods = {};
+  var $interval = {};
 
   $.extend($.timeago, {
     settings: {
@@ -98,7 +100,15 @@
     }
   });
 
-  $.fn.timeago = function() {
+  $.fn.timeago = function(method) {
+    if ($methods[method]) {
+      return $methods[method].apply(this, Array.prototype.slice.call(arguments, 1));
+    } else {
+      return $methods["start"].apply(this, Array.prototype.slice.call(arguments, 1));
+    }
+  }
+  
+  $methods["start"] = function() {
     if (this.length === 0) return;
 
     var self = this;
@@ -107,10 +117,17 @@
 
     var $s = $t.settings;
     if ($s.refreshMillis > 0) {
-      setInterval(function() { newTimestamps.each(refresh); }, $s.refreshMillis);
+      $interval = setInterval(function() { newTimestamps.each(refresh); }, $s.refreshMillis);
     }
     return self;
   };
+  
+  $methods["stop"] = function() {
+    if (typeof $interval === "undefined") {
+      clearInterval($interval);
+      $interval = undefined;
+    }
+  }
 
   function refresh() {
     var data = prepareData(this);
